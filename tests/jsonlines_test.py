@@ -35,3 +35,20 @@ def test_jsonlfile_get_columns(mocker: MockerFixture):
             exact=True,
         ),
     }
+
+
+def test_jsonlfile_different_type(mocker: MockerFixture):
+    contents = """{"a": 1}
+{"a": 2.0}
+{"a": "test"}"""
+    mocker.patch("builtins.open", mock_open(read_data=contents))
+
+    adapter = JsonlFile("test.jsonl")
+
+    assert adapter.get_columns() == {
+        "a": String(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        )
+    }
