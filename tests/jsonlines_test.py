@@ -1,6 +1,8 @@
 from unittest.mock import mock_open
 
+import pytest
 from pytest_mock import MockerFixture
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float, Integer, Order, String
 from shillelagh.filters import Equal, IsNotNull, IsNull, NotEqual, Range
 
@@ -52,3 +54,11 @@ def test_jsonlfile_different_type(mocker: MockerFixture):
             exact=True,
         )
     }
+
+
+def test_jsonlfile_empty(mocker: MockerFixture):
+    mocker.patch("builtins.open", mock_open(read_data=""))
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        _ = JsonlFile("test.csv")
+    assert str(excinfo.value) == "The file has no rows"
