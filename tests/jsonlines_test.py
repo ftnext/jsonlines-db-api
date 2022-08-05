@@ -62,3 +62,20 @@ def test_jsonlfile_empty(mocker: MockerFixture):
     with pytest.raises(ProgrammingError) as excinfo:
         _ = JsonlFile("test.csv")
     assert str(excinfo.value) == "The file has no rows"
+
+
+def test_jsonlfile_unordered(mocker: MockerFixture):
+    contents = """{"a": 1}
+{"a": 2}
+{"a": 1}"""
+    mocker.patch("builtins.open", mock_open(read_data=contents))
+
+    adapter = JsonlFile("test.jsonl")
+
+    assert adapter.get_columns() == {
+        "a": Integer(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        )
+    }
