@@ -7,6 +7,7 @@ import pytest
 from freezegun import freeze_time
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pytest_mock import MockerFixture
+from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float, Integer, Order, String
@@ -211,3 +212,15 @@ def test_jsonlfile_close_not_modified(fs: FakeFilesystem):
         path.stat().st_mtime
         == datetime(2022, 1, 1, tzinfo=timezone.utc).timestamp()
     )
+
+
+def test_dispatch():
+    with open("test.jsonl", "w", encoding="utf-8") as fp:
+        fp.write(CONTENTS)
+
+    connection = connect(":memory:", ["jsonlfile"])
+    cursor = connection.cursor()
+
+    sql = """SELECT * FROM "test.jsonl" WHERE "index" > 11"""
+    data = list(cursor.execute(sql))
+    assert data == [(12, 13.3, "Platinum_St"), (13, 12.1, "Kodiak_Trail")]
