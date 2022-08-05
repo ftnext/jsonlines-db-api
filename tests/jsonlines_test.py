@@ -4,7 +4,14 @@ import pytest
 from pytest_mock import MockerFixture
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float, Integer, Order, String
-from shillelagh.filters import Equal, IsNotNull, IsNull, NotEqual, Range
+from shillelagh.filters import (
+    Equal,
+    Impossible,
+    IsNotNull,
+    IsNull,
+    NotEqual,
+    Range,
+)
 
 from jsonlinesdb.adapter import JsonlFile
 
@@ -147,3 +154,10 @@ def test_jsonlfile_get_data(mocker: MockerFixture):
             [],
         )
     ) == [{"rowid": 0, "index": 10, "temperature": 15.2, "site": "Diamond_St"}]
+
+
+def test_jsonlfile_get_data_impossible_filter(mocker: MockerFixture):
+    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
+
+    adapter = JsonlFile("test.jsonl")
+    assert list(adapter.get_data({"index": Impossible()}, [])) == []
