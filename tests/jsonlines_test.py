@@ -1,7 +1,10 @@
 from unittest.mock import mock_open
 
+import apsw
 import pytest
+from pyfakefs.fake_filesystem import FakeFilesystem
 from pytest_mock import MockerFixture
+from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float, Integer, Order, String
 from shillelagh.filters import (
@@ -12,6 +15,7 @@ from shillelagh.filters import (
     NotEqual,
     Range,
 )
+from shillelagh.lib import serialize
 
 from jsonlinesdb.adapter import JsonlFile
 
@@ -161,3 +165,19 @@ def test_jsonlfile_get_data_impossible_filter(mocker: MockerFixture):
 
     adapter = JsonlFile("test.jsonl")
     assert list(adapter.get_data({"index": Impossible()}, [])) == []
+
+
+def test_jsonlfile(fs: FakeFilesystem):
+    with open("test.jsonl", "w", encoding="utf-8") as fp:
+        fp.write(CONTENTS)
+
+    connection = apsw.Connection(":memory:")
+    cursor = connection.cursor()
+    connection.createmodule("jsonlfile", VTModule(JsonlFile))
+    cursor.execute(
+        f"""CREATE VIRTUAL TABLE test USING jsonlfile('{serialize('test.jsonl')}')"""  # noqa: E501
+    )
+
+    sql = 'SELECT * FROM test WHERE "index" > 11'
+    data = list(cursor.execute(sql))
+    assert data == [("12", 13.3, "Platinum_St"), ("13", 12.1, "Kodiak_Trail")]
