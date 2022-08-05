@@ -100,3 +100,50 @@ def test_jsonlfile_single_row_of_data(mocker: MockerFixture):
         ),
     }
     assert list(adapter.get_data({}, [])) == [{"a": 1, "b": 2, "rowid": 0}]
+
+
+def test_jsonlfile_get_data(mocker: MockerFixture):
+    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
+
+    adapter = JsonlFile("test.jsonl")
+
+    assert list(adapter.get_data({}, [])) == [
+        {"rowid": 0, "index": 10, "temperature": 15.2, "site": "Diamond_St"},
+        {
+            "rowid": 1,
+            "index": 11,
+            "temperature": 13.1,
+            "site": "Blacktail_Loop",
+        },
+        {"rowid": 2, "index": 12, "temperature": 13.3, "site": "Platinum_St"},
+        {"rowid": 3, "index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
+    ]
+
+    assert list(
+        adapter.get_data({"index": Range(11, None, False, False)}, [])
+    ) == [
+        {"rowid": 2, "index": 12, "temperature": 13.3, "site": "Platinum_St"},
+        {"rowid": 3, "index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
+    ]
+
+    assert list(
+        adapter.get_data({"index": Range(None, 11, False, True)}, [])
+    ) == [
+        {"rowid": 0, "index": 10, "temperature": 15.2, "site": "Diamond_St"},
+        {
+            "rowid": 1,
+            "index": 11,
+            "temperature": 13.1,
+            "site": "Blacktail_Loop",
+        },
+    ]
+
+    assert list(
+        adapter.get_data(
+            {
+                "index": Range(None, 11, False, True),
+                "temperature": Range(14, None, False, False),
+            },
+            [],
+        )
+    ) == [{"rowid": 0, "index": 10, "temperature": 15.2, "site": "Diamond_St"}]
