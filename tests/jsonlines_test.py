@@ -75,7 +75,7 @@ def test_jsonlfile_empty(mocker: MockerFixture):
     mocker.patch("builtins.open", mock_open(read_data=""))
 
     with pytest.raises(ProgrammingError) as excinfo:
-        _ = JsonlFile("test.csv")
+        _ = JsonlFile("test.jsonl")
     assert str(excinfo.value) == "The file has no rows"
 
 
