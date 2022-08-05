@@ -79,3 +79,24 @@ def test_jsonlfile_unordered(mocker: MockerFixture):
             exact=True,
         )
     }
+
+
+def test_jsonlfile_single_row_of_data(mocker: MockerFixture):
+    contents = """{"a": 1, "b": 2}"""
+    mocker.patch("builtins.open", mock_open(read_data=contents))
+
+    adapter = JsonlFile("test.jsonl")
+
+    assert adapter.get_columns() == {
+        "a": Integer(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        ),
+        "b": Integer(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        ),
+    }
+    assert list(adapter.get_data({}, [])) == [{"a": 1, "b": 2, "rowid": 0}]
