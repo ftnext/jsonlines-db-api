@@ -1,0 +1,33 @@
+name: Run unit tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ['3.8', '3.9', '3.10']
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install -U pip setuptools
+        pip install -e .[test]
+        # FIXME: This is workaround; shillelagh currently needs dependencies of all adapters to be installed (like datasetteapi)
+        pip install shillelagh[all]
+    - name: Test with pytest
+      run: |
+        pytest -vv
