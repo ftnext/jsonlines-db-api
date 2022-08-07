@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
@@ -16,6 +17,9 @@ from shillelagh.filters import (
 )
 from shillelagh.lib import RowIDManager, analyze, filter_data
 from shillelagh.typing import RequestedOrder, Row
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class JsonlFile(Adapter):
@@ -38,7 +42,7 @@ class JsonlFile(Adapter):
 
         self.path = Path(path)
 
-        print(f"Opening JSONL file {self.path} to load metadata")
+        logger.debug(f"Opening JSONL file {self.path} to load metadata")
         with jsonlines.open(self.path) as reader:
             data = list(reader)
         try:
@@ -49,7 +53,7 @@ class JsonlFile(Adapter):
 
         row_tracker = RowTracker(data)
         num_rows, order, types = analyze(row_tracker)
-        print(f"Read {num_rows} rows")
+        logger.debug(f"Read {num_rows} rows")
 
         self.columns = {
             column_name: types[column_name](
@@ -76,7 +80,7 @@ class JsonlFile(Adapter):
         offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
-        print(f"Opening JSONL file {self.path} to load metadata")
+        logger.debug(f"Opening JSONL file {self.path} to load metadata")
         with jsonlines.open(self.path) as reader:
             data = (
                 {"rowid": i, **row}
@@ -85,5 +89,5 @@ class JsonlFile(Adapter):
             )
 
             for row in filter_data(data, bounds, order, limit, offset):
-                print(row)
+                logger.debug(row)
                 yield row
